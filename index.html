@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Beta cerrada de MobileController: controla tu videojuego desde el smartphone, sin instalar ninguna app.">
+<title>MobileController · Beta cerrada</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+/* Same look as the farewell screen of the phones (client/boot/index.html of the core). */
+:root {
+  --bg: #0f1115; --bg-glow: #1c2230; --card: #161a23; --line: #2a3142;
+  --text: #e8eaf0; --strong: #fff; --muted: #9aa3b5; --faint: #6b7386;
+  --accent: #3b82f6; --link: #60a5fa; --error: #fca5a5; --ok: #86efac;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body {
+  min-height: 100vh; color: var(--text); background: radial-gradient(circle at 50% 18%, var(--bg-glow) 0, var(--bg) 60%) no-repeat;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: 40px 16px max(24px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color: transparent;
+}
+a { color: var(--link); }
+main { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+
+#lang {
+  position: absolute; top: 16px; right: 16px; padding: 4px 12px; border-radius: 999px;
+  background: transparent; color: var(--muted); border: 1px solid var(--line);
+  font: inherit; font-size: 12px; letter-spacing: .08em; cursor: pointer;
+}
+#lang:hover { color: var(--text); border-color: var(--muted); }
+
+header { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+#logo { width: min(34vmin, 112px); height: auto; }
+.pill {
+  padding: 4px 14px; border-radius: 999px; background: var(--accent); color: #fff;
+  font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+}
+h1 { font-size: clamp(26px, 6vw, 34px); line-height: 1.2; font-weight: 700; color: var(--strong); }
+.lead { max-width: 520px; color: var(--text); font-size: 16px; }
+
+h2 { font-size: 20px; line-height: 1.3; color: var(--strong); margin-bottom: 14px; }
+.features { list-style: none; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.features li { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.features b { display: block; color: var(--strong); margin-bottom: 2px; }
+.features span, .muted { color: var(--muted); font-size: 14px; }
+
+.steps { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
+.steps li { counter-increment: step; display: flex; gap: 12px; align-items: baseline; }
+.steps li::before {
+  content: counter(step); flex: none; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-grid; place-items: center; background: var(--line); color: var(--strong); font-size: 13px; font-weight: 700;
+}
+
+.card { padding: 24px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+form { display: flex; flex-direction: column; gap: 18px; }
+.row { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > label, legend { font-size: 14px; font-weight: 600; color: var(--strong); }
+.req { color: var(--link); }
+.opt { font-weight: 400; color: var(--faint); }
+.hint { font-size: 13px; color: var(--muted); }
+input[type=text], input[type=email], input[type=url], select, textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); font: inherit;
+}
+textarea { min-height: 110px; resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+fieldset { border: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+.other[hidden] { display: none; }
+/* Honeypot: people never see it, form bots fill it in. */
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+button[type=submit] {
+  align-self: center; padding: 12px 32px; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--accent); color: #fff; font: inherit; font-size: 16px; font-weight: 600;
+}
+button[type=submit]:disabled { opacity: .6; cursor: progress; }
+#status { min-height: 1.5em; text-align: center; font-size: 14px; white-space: pre-line; }
+#status.error { color: var(--error); }
+
+#done { display: none; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 16px 0; }
+#done .title { font-size: 24px; line-height: 1.25; font-weight: 700; color: var(--strong); }
+.sent #done { display: flex; }
+.sent form { display: none; }
+
+.privacy { font-size: 12px; color: var(--faint); text-align: center; }
+footer { text-align: center; font-size: 12px; letter-spacing: .08em; color: var(--faint); }
+footer a { color: inherit; text-decoration: none; }
+</style>
+</head>
+<body>
+<button id="lang" type="button" aria-label="English">EN</button>
+<main>
+  <header>
+    <img id="logo" src="logo.svg" alt="MobileController" width="112" height="112">
+    <p class="pill" data-i18n="pill">Beta cerrada</p>
+    <h1 data-i18n="title">Controla tu videojuego desde el smartphone</h1>
+    <p class="lead" data-i18n="lead">Los jugadores escanean un código QR y su móvil se convierte en el mando, sin instalar ninguna app. Estamos abriendo una beta cerrada para estudios y desarrolladores que quieran probarlo en su juego.</p>
+  </header>
+
+  <section>
+    <h2 data-i18n="what_title">Qué es MobileController</h2>
+    <ul class="features">
+      <li><b data-i18n="f1_t">Sin apps</b><span data-i18n="f1_d">El mando se abre en el navegador del móvil con un QR.</span></li>
+      <li><b data-i18n="f2_t">Multijugador local</b><span data-i18n="f2_d">Varios móviles a la vez, cada uno con su jugador.</span></li>
+      <li><b data-i18n="f3_t">Mandos a medida</b><span data-i18n="f3_d">Perfiles de controles diseñados para cada juego.</span></li>
+      <li><b data-i18n="f4_t">Para cualquier motor</b><span data-i18n="f4_d">Una librería C++ pensada para Unreal, Unity, Godot y motores propios.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 data-i18n="how_title">Cómo funciona la beta</h2>
+    <ol class="steps">
+      <li data-i18n="s1">Rellenas la solicitud con los datos de tu proyecto.</li>
+      <li data-i18n="s2">La revisamos. Las plazas son limitadas y buscamos juegos variados.</li>
+      <li data-i18n="s3">Si encajas, te escribimos con el acceso y los siguientes pasos. A cambio, solo te pedimos tu opinión.</li>
+    </ol>
+  </section>
+
+  <section class="card" id="apply">
+    <h2 data-i18n="form_title">Solicita tu plaza</h2>
+    <form id="form" autocomplete="on">
+      <div class="row">
+        <div class="field">
+          <label for="name"><span data-i18n="name">Nombre</span> <span class="req">*</span></label>
+          <input id="name" name="name" type="text" required maxlength="80" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="email"><span data-i18n="email">Email</span> <span class="req">*</span></label>
+          <input id="email" name="email" type="email" required maxlength="120" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="studio"><span data-i18n="studio">Estudio o equipo</span> <span class="opt" data-i18n="optional">(opcional)</span></label>
+        <input id="studio" name="studio" type="text" maxlength="100" autocomplete="organization">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="source"><span data-i18n="source">¿Dónde nos conociste?</span> <span class="req">*</span></label>
+          <!-- Values stay in Spanish: they go to the mail and to its subject whatever the page language. -->
+          <select id="source" name="source" required>
+            <option value="" data-i18n="choose">Elige una opción</option>
+            <option value="Hold On, Trooper!" data-i18n="src_demo">Jugando a «Hold On, Trooper!»</option>
+            <option value="Evento" data-i18n="src_event">En una feria o evento</option>
+            <option value="Redes sociales" data-i18n="src_social">Redes sociales</option>
+            <option value="YouTube o Twitch" data-i18n="src_video">YouTube o Twitch</option>
+            <option value="Foro o Reddit" data-i18n="src_forum">Un foro o Reddit</option>
+            <option value="Discord" data-i18n="src_discord">Discord</option>
+            <option value="Recomendación" data-i18n="src_friend">Me lo recomendaron</option>
+            <option value="Buscador" data-i18n="src_search">Buscando en internet</option>
+            <option value="Otro" data-i18n="other">Otro</option>
+          </select>
+          <input id="source-other" class="other" name="source_other" type="text" maxlength="60" hidden data-i18n-ph="specify" placeholder="¿Dónde?">
+        </div>
+        <div class="field">
+          <label for="engine"><span data-i18n="engine">Motor</span> <span class="req">*</span></label>
+          <select id="engine" name="engine" required>
+            <option value="" data-i18n="choose">Elige una opción</option>
+            <option value="Unreal Engine">Unreal Engine</option>
+            <option value="Unity">Unity</option>
+            <option value="Godot">Godot</option>
+            <option value="Motor propio en C/C++" data-i18n="eng_cpp">Motor propio en C/C++</option>
+            <option value="Aún no lo sé" data-i18n="eng_unknown">Aún no lo sé</option>
+            <option value="Otro" data-i18n="other">Otro</option>
+          </select>
+          <input id="engine-other" class="other" name="engine_other" type="text" maxlength="60" hidden data-i18n-ph="which" placeholder="¿Cuál?">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="concept"><span data-i18n="concept">Estilo o concepto del juego</span> <span class="opt" data-i18n="recommended">(opcional, pero recomendado)</span></label>
+        <textarea id="concept" name="concept" maxlength="2000" data-i18n-ph="concept_ph" placeholder="Género, cómo se juega y qué haría el móvil en tu juego…"></textarea>
+        <p class="hint" data-i18n="concept_hint">Es lo que más pesa para entrar en la beta.</p>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="stage"><span data-i18n="stage">Estado del proyecto</span> <span class="opt" data-i18n="optional">(opcional)</span></label>
+          <select id="stage" name="stage">
+            <option value="" data-i18n="choose">Elige una opción</option>
+            <option value="Idea" data-i18n="st_idea">Es solo una idea</option>
+            <option value="Prototipo" data-i18n="st_proto">Prototipo</option>
+            <option value="En producción" data-i18n="st_prod">En producción</option>
+            <option value="Publicado" data-i18n="st_live">Ya publicado</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="players"><span data-i18n="players">Móviles a la vez</span> <span class="opt" data-i18n="optional">(opcional)</span></label>
+          <select id="players" name="players">
+            <option value="" data-i18n="choose">Elige una opción</option>
+            <option value="1">1</option>
+            <option value="2–4">2–4</option>
+            <option value="5–8">5–8</option>
+            <option value="Más de 8" data-i18n="pl_many">Más de 8</option>
+          </select>
+        </div>
+      </div>
+
+      <fieldset>
+        <legend><span data-i18n="platforms">¿En qué sistemas corre tu juego?</span> <span class="opt" data-i18n="optional">(opcional)</span></legend>
+        <div class="checks">
+          <label class="check"><input type="checkbox" name="platform" value="Windows">Windows</label>
+          <label class="check"><input type="checkbox" name="platform" value="Linux">Linux</label>
+          <label class="check"><input type="checkbox" name="platform" value="macOS">macOS</label>
+          <label class="check"><input type="checkbox" name="platform" value="Consola"><span data-i18n="pf_console">Consola</span></label>
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="link"><span data-i18n="link">Enlace al proyecto</span> <span class="opt" data-i18n="optional">(opcional)</span></label>
+        <input id="link" name="link" type="url" maxlength="300" placeholder="https://" >
+        <p class="hint" data-i18n="link_hint">Steam, itch.io, web, un vídeo… lo que nos ayude a ver tu juego.</p>
+      </div>
+
+      <div class="trap" aria-hidden="true">
+        <label for="website">Website</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <fieldset>
+        <label class="check"><input id="consent" type="checkbox" required><span><span data-i18n="consent">Acepto que se usen estos datos para gestionar mi solicitud a la beta.</span> <span class="req">*</span></span></label>
+        <label class="check"><input id="news" type="checkbox"><span data-i18n="news">Quiero recibir novedades del proyecto por email.</span></label>
+      </fieldset>
+
+      <button type="submit" id="send" data-i18n="send">Enviar solicitud</button>
+      <p id="status" role="status" aria-live="polite"></p>
+    </form>
+
+    <div id="done">
+      <p class="title" data-i18n="done_title">¡Solicitud enviada!</p>
+      <p data-i18n="done_text">Gracias por tu interés. Revisamos cada solicitud a mano y te escribiremos al email que nos has dado.</p>
+    </div>
+  </section>
+
+  <p class="privacy"><span data-i18n="privacy">Solo usamos estos datos para gestionar la beta y no los compartimos con nadie. El formulario se envía a través de FormSubmit. Para consultarlos o borrarlos, escríbenos a</span> <a href="mailto:cranelab.dev@gmail.com">cranelab.dev@gmail.com</a>.</p>
+
+  <footer>Powered by MobileController</footer>
+</main>
+
+<script>
+'use strict';
+
+// FormSubmit relays the form to this address. Its first use sends an activation mail there; once
+// activated, the address can be swapped for the random alias FormSubmit gives, out of reach of bots.
+const FORM_ENDPOINT = 'https://formsubmit.co/ajax/cranelab.dev@gmail.com';
+const CONTACT = 'cranelab.dev@gmail.com';
+
+// ?ref=<key> preselects "¿Dónde nos conociste?", e.g. from the game's farewell screen.
+const REFS = {
+  trooper: 'Hold On, Trooper!', demo: 'Hold On, Trooper!', event: 'Evento', social: 'Redes sociales',
+  youtube: 'YouTube o Twitch', twitch: 'YouTube o Twitch', reddit: 'Foro o Reddit', discord: 'Discord',
+};
+
+const EN = {
+  pill: 'Closed beta',
+  title: 'Control your game from a smartphone',
+  lead: 'Players scan a QR code and their phone becomes the controller, with no app to install. We are opening a closed beta for studios and developers who want to try it in their game.',
+  what_title: 'What MobileController is',
+  f1_t: 'No apps', f1_d: 'The controller opens in the phone’s browser from a QR code.',
+  f2_t: 'Local multiplayer', f2_d: 'Several phones at once, each one with its own player.',
+  f3_t: 'Custom controllers', f3_d: 'Control layouts designed for each game.',
+  f4_t: 'For any engine', f4_d: 'A C++ library built for Unreal, Unity, Godot and in-house engines.',
+  how_title: 'How the beta works',
+  s1: 'Fill in the application with your project’s details.',
+  s2: 'We review it. Places are limited and we are looking for a variety of games.',
+  s3: 'If it’s a good fit, we write to you with access and the next steps. All we ask in return is your feedback.',
+  form_title: 'Apply for a place',
+  name: 'Name', email: 'Email', studio: 'Studio or team', optional: '(optional)',
+  source: 'Where did you hear about us?', choose: 'Choose an option',
+  src_demo: 'Playing “Hold On, Trooper!”', src_event: 'At a fair or event', src_social: 'Social media',
+  src_video: 'YouTube or Twitch', src_forum: 'A forum or Reddit', src_discord: 'Discord',
+  src_friend: 'Someone recommended it', src_search: 'Searching online', other: 'Other',
+  specify: 'Where?', which: 'Which one?',
+  engine: 'Engine', eng_cpp: 'In-house C/C++ engine', eng_unknown: 'Not sure yet',
+  concept: 'Style or concept of the game', recommended: '(optional, but recommended)',
+  concept_ph: 'Genre, how it plays and what the phone would do in your game…',
+  concept_hint: 'This weighs the most when choosing who joins the beta.',
+  stage: 'Project stage', st_idea: 'Just an idea', st_proto: 'Prototype', st_prod: 'In production', st_live: 'Already released',
+  players: 'Phones at once', pl_many: 'More than 8',
+  platforms: 'Which systems does your game run on?', pf_console: 'Console',
+  link: 'Link to the project', link_hint: 'Steam, itch.io, a website, a video… anything that helps us see your game.',
+  consent: 'I agree to the use of this data to manage my beta application.',
+  news: 'I want to get project news by email.',
+  send: 'Send application', sending: 'Sending…',
+  done_title: 'Application sent!',
+  done_text: 'Thanks for your interest. We review every application by hand and will write to the email you gave us.',
+  error: 'It could not be sent. Try again in a moment or write to us at ' + CONTACT + '.',
+  autoresponse: 'Hi! We have received your application for the MobileController closed beta. We review every application by hand and will get back to you at this address. Thank you!',
+  privacy: 'We only use this data to run the beta and never share it. The form is sent through FormSubmit. To see or delete your data, write to us at',
+};
+
+const $ = (id) => document.getElementById(id);
+const form = $('form');
+const ES = {};  // the page's own Spanish text, read once
+document.querySelectorAll('[data-i18n]').forEach((el) => { ES[el.dataset.i18n] ??= el.textContent; });
+document.querySelectorAll('[data-i18n-ph]').forEach((el) => { ES[el.dataset.i18nPh] ??= el.placeholder; });
+Object.assign(ES, {
+  sending: 'Enviando…',
+  error: 'No se ha podido enviar. Inténtalo de nuevo en un momento o escríbenos a ' + CONTACT + '.',
+  autoresponse: '¡Hola! Hemos recibido tu solicitud para la beta cerrada de MobileController. Revisamos cada solicitud a mano y te responderemos a esta dirección. ¡Gracias!',
+});
+
+let lang = 'es';
+const t = (key) => (lang === 'en' ? EN : ES)[key] ?? ES[key];
+
+function setLang(next) {
+  lang = next;
+  document.documentElement.lang = next;
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  const other = next === 'es' ? 'en' : 'es';
+  $('lang').textContent = other.toUpperCase();
+  $('lang').setAttribute('aria-label', other === 'en' ? 'English' : 'Español');
+  try { localStorage.setItem('lang', next); } catch (e) { /* private mode: language just isn't kept */ }
+}
+
+$('lang').addEventListener('click', () => setLang(lang === 'es' ? 'en' : 'es'));
+
+// "Otro" opens a text box of its own, required while it shows.
+function bindOther(selectId, inputId) {
+  const select = $(selectId), input = $(inputId);
+  const sync = () => {
+    input.hidden = select.value !== 'Otro';
+    input.required = !input.hidden;
+    if (!input.hidden && document.activeElement === select) input.focus();
+  };
+  select.addEventListener('change', sync);
+  sync();
+}
+bindOther('source', 'source-other');
+bindOther('engine', 'engine-other');
+
+// One line, no brackets: the value goes into the mail's subject.
+const clean = (s) => s.replace(/[\r\n\[\]]+/g, ' ').replace(/\s+/g, ' ').trim();
+const pick = (selectId, otherId) => {
+  const value = $(selectId).value;
+  return value === 'Otro' && clean($(otherId).value) ? 'Otro: ' + clean($(otherId).value) : value;
+};
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if ($('website').value) return;  // a bot filled in the honeypot
+  const status = $('status'), send = $('send');
+  const name = clean($('name').value);
+  const source = pick('source', 'source-other');
+  const subjectSource = source.startsWith('Otro: ') ? source.slice(6) : source;
+  const platforms = [...form.querySelectorAll('input[name=platform]:checked')].map((el) => el.value);
+  const payload = {
+    'Nombre': name,
+    email: $('email').value.trim(),  // lower case: FormSubmit's _autoresponse goes to this field
+    'Estudio o equipo': clean($('studio').value) || '—',
+    'Dónde nos conoció': source,
+    'Motor': pick('engine', 'engine-other'),
+    'Estilo o concepto del juego': $('concept').value.trim() || '—',
+    'Estado del proyecto': $('stage').value || '—',
+    'Móviles a la vez': $('players').value || '—',
+    'Sistemas': platforms.join(', ') || '—',
+    'Enlace': $('link').value.trim() || '—',
+    'Acepta novedades': $('news').checked ? 'Sí' : 'No',
+    'Idioma de la página': lang.toUpperCase(),
+    _subject: `[BETA][${subjectSource}] Solicitud de ${name}`,
+    _replyto: $('email').value.trim(),
+    _template: 'table',
+    _captcha: 'false',
+    _autoresponse: t('autoresponse'),
+  };
+
+  send.disabled = true;
+  send.textContent = t('sending');
+  status.textContent = '';
+  status.className = '';
+  try {
+    const response = await fetch(FORM_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    // FormSubmit answers success as the string "true".
+    if (!response.ok || String(data.success) !== 'true') throw new Error(data.message || response.status);
+    $('apply').classList.add('sent');
+    $('apply').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    status.textContent = t('error');
+    status.className = 'error';
+    send.disabled = false;
+    send.textContent = t('send');
+  }
+});
+
+// Start-up: language (saved choice, then the browser's) and the ?ref= source.
+let saved = null;
+try { saved = localStorage.getItem('lang'); } catch (e) { /* no storage: browser language */ }
+setLang(saved === 'es' || saved === 'en' ? saved : (navigator.language || 'es').toLowerCase().startsWith('es') ? 'es' : 'en');
+const ref = REFS[(new URLSearchParams(location.search).get('ref') || '').toLowerCase()];
+if (ref) $('source').value = ref;
+</script>
+</body>
+</html>
