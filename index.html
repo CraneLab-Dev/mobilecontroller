@@ -150,7 +150,8 @@ footer a { color: inherit; text-decoration: none; }
           <!-- Values stay in Spanish: they go to the mail and to its subject whatever the page language. -->
           <select id="source" name="source" required>
             <option value="" data-i18n="choose">Elige una opción</option>
-            <option value="Hold On, Trooper!" data-i18n="src_demo">Jugando a «Hold On, Trooper!»</option>
+            <!-- Off while the demo is shown at fairs, so its players pick "Evento":
+            <option value="Hold On, Trooper!" data-i18n="src_demo">Jugando a «Hold On, Trooper!»</option> -->
             <option value="Evento" data-i18n="src_event">En una feria o evento</option>
             <option value="Redes sociales" data-i18n="src_social">Redes sociales</option>
             <option value="YouTube o Twitch" data-i18n="src_video">YouTube o Twitch</option>
@@ -222,6 +223,11 @@ footer a { color: inherit; text-decoration: none; }
         <p class="hint" data-i18n="link_hint">Steam, itch.io, web, un vídeo… lo que nos ayude a ver tu juego.</p>
       </div>
 
+      <div class="field">
+        <label for="comments"><span data-i18n="comments">¿Algo más que quieras contarnos?</span> <span class="opt" data-i18n="optional">(opcional)</span></label>
+        <textarea id="comments" name="comments" maxlength="2000" data-i18n-ph="comments_ph" placeholder="Dudas, ideas, lo que necesitarías del mando…"></textarea>
+      </div>
+
       <div class="trap" aria-hidden="true">
         <label for="website">Website</label>
         <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
@@ -257,7 +263,8 @@ const CONTACT = 'cranelab.dev@gmail.com';
 
 // ?ref=<key> preselects "¿Dónde nos conociste?", e.g. from the game's farewell screen.
 const REFS = {
-  trooper: 'Hold On, Trooper!', demo: 'Hold On, Trooper!', event: 'Evento', social: 'Redes sociales',
+  // trooper: 'Hold On, Trooper!', demo: 'Hold On, Trooper!',  // off along with its option
+  event: 'Evento', social: 'Redes sociales',
   youtube: 'YouTube o Twitch', twitch: 'YouTube o Twitch', reddit: 'Foro o Reddit', discord: 'Discord',
 };
 
@@ -289,6 +296,8 @@ const EN = {
   players: 'Phones at once', pl_many: 'More than 8',
   platforms: 'Which systems does your game run on?', pf_console: 'Console',
   link: 'Link to the project', link_hint: 'Steam, itch.io, a website, a video… anything that helps us see your game.',
+  comments: 'Anything else you’d like to tell us?', comments_ph: 'Questions, ideas, what you’d need from the controller…',
+  event_ph: 'Which fair or event?',
   consent: 'I agree to the use of this data to manage my beta application.',
   news: 'I want to get project news by email.',
   send: 'Send application', sending: 'Sending…',
@@ -305,6 +314,7 @@ const ES = {};  // the page's own Spanish text, read once
 document.querySelectorAll('[data-i18n]').forEach((el) => { ES[el.dataset.i18n] ??= el.textContent; });
 document.querySelectorAll('[data-i18n-ph]').forEach((el) => { ES[el.dataset.i18nPh] ??= el.placeholder; });
 Object.assign(ES, {
+  event_ph: '¿Qué feria o evento?',
   sending: 'Enviando…',
   error: 'No se ha podido enviar. Inténtalo de nuevo en un momento o escríbenos a ' + CONTACT + '.',
   autoresponse: '¡Hola! Hemos recibido tu solicitud para la beta cerrada de MobileController. Revisamos cada solicitud a mano y te responderemos a esta dirección. ¡Gracias!',
@@ -326,25 +336,29 @@ function setLang(next) {
 
 $('lang').addEventListener('click', () => setLang(lang === 'es' ? 'en' : 'es'));
 
-// "Otro" opens a text box of its own, required while it shows.
-function bindOther(selectId, inputId) {
+// Some options open a text box of their own: "Otro" requires it, "Evento" only offers it.
+function bindDetail(selectId, inputId, details) {
   const select = $(selectId), input = $(inputId);
   const sync = () => {
-    input.hidden = select.value !== 'Otro';
-    input.required = !input.hidden;
-    if (!input.hidden && document.activeElement === select) input.focus();
+    const detail = details[select.value];
+    input.hidden = !detail;
+    input.required = Boolean(detail?.required);
+    if (!detail) return;
+    input.dataset.i18nPh = detail.ph;  // setLang keeps translating it
+    input.placeholder = t(detail.ph);
+    if (document.activeElement === select) input.focus();
   };
   select.addEventListener('change', sync);
   sync();
 }
-bindOther('source', 'source-other');
-bindOther('engine', 'engine-other');
+bindDetail('source', 'source-other', { Otro: { ph: 'specify', required: true }, Evento: { ph: 'event_ph' } });
+bindDetail('engine', 'engine-other', { Otro: { ph: 'which', required: true } });
 
 // One line, no brackets: the value goes into the mail's subject.
 const clean = (s) => s.replace(/[\r\n\[\]]+/g, ' ').replace(/\s+/g, ' ').trim();
-const pick = (selectId, otherId) => {
-  const value = $(selectId).value;
-  return value === 'Otro' && clean($(otherId).value) ? 'Otro: ' + clean($(otherId).value) : value;
+const pick = (selectId, detailId) => {
+  const value = $(selectId).value, detail = clean($(detailId).value);
+  return !$(detailId).hidden && detail ? value + ': ' + detail : value;
 };
 
 form.addEventListener('submit', async (event) => {
@@ -353,7 +367,8 @@ form.addEventListener('submit', async (event) => {
   const status = $('status'), send = $('send');
   const name = clean($('name').value);
   const source = pick('source', 'source-other');
-  const subjectSource = source.startsWith('Otro: ') ? source.slice(6) : source;
+  // Only events get a tag in the subject: [EV] or [EV: <name>].
+  const subjectTag = source.startsWith('Evento') ? '[EV' + source.slice(6) + ']' : '';
   const platforms = [...form.querySelectorAll('input[name=platform]:checked')].map((el) => el.value);
   const payload = {
     'Nombre': name,
@@ -366,9 +381,10 @@ form.addEventListener('submit', async (event) => {
     'Móviles a la vez': $('players').value || '—',
     'Sistemas': platforms.join(', ') || '—',
     'Enlace': $('link').value.trim() || '—',
+    'Comentarios': $('comments').value.trim() || '—',
     'Acepta novedades': $('news').checked ? 'Sí' : 'No',
     'Idioma de la página': lang.toUpperCase(),
-    _subject: `[BETA][${subjectSource}] Solicitud de ${name}`,
+    _subject: `[BETA]${subjectTag} Solicitud de ${name}`,
     _replyto: $('email').value.trim(),
     _template: 'table',
     _captcha: 'false',
@@ -403,7 +419,10 @@ let saved = null;
 try { saved = localStorage.getItem('lang'); } catch (e) { /* no storage: browser language */ }
 setLang(saved === 'es' || saved === 'en' ? saved : (navigator.language || 'es').toLowerCase().startsWith('es') ? 'es' : 'en');
 const ref = REFS[(new URLSearchParams(location.search).get('ref') || '').toLowerCase()];
-if (ref) $('source').value = ref;
+if (ref) {
+  $('source').value = ref;
+  $('source').dispatchEvent(new Event('change'));  // shows the event box for ?ref=event
+}
 </script>
 </body>
 </html>
