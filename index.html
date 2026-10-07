@@ -103,15 +103,15 @@ footer a { color: inherit; text-decoration: none; }
     <img id="logo" src="logo.svg" alt="MobileController" width="112" height="112">
     <p class="pill" data-i18n="pill">Beta cerrada</p>
     <h1 data-i18n="title">Controla tu videojuego desde el smartphone</h1>
-    <p class="lead" data-i18n="lead">Los jugadores escanean un código QR y su móvil se convierte en el mando, sin instalar ninguna app. Estamos abriendo una beta cerrada para estudios y desarrolladores que quieran probarlo en su juego.</p>
+    <p class="lead" data-i18n="lead">Los jugadores escanean un código QR y su móvil se convierte en la interfaz de control del juego, sin instalar ninguna app. En los próximos meses abriremos una beta cerrada para estudios y desarrolladores que quieran probarlo en su juego.</p>
   </header>
 
   <section>
     <h2 data-i18n="what_title">Qué es MobileController</h2>
     <ul class="features">
-      <li><b data-i18n="f1_t">Sin apps</b><span data-i18n="f1_d">El mando se abre en el navegador del móvil con un QR.</span></li>
+      <li><b data-i18n="f1_t">Sin apps</b><span data-i18n="f1_d">La interfaz se abre en el navegador del móvil con un QR.</span></li>
       <li><b data-i18n="f2_t">Multijugador local</b><span data-i18n="f2_d">Varios móviles a la vez, cada uno con su jugador.</span></li>
-      <li><b data-i18n="f3_t">Mandos a medida</b><span data-i18n="f3_d">Perfiles de controles diseñados para cada juego.</span></li>
+      <li><b data-i18n="f3_t">Interfaces a medida</b><span data-i18n="f3_d">Cada juego diseña la interfaz que necesita en el móvil.</span></li>
       <li><b data-i18n="f4_t">Para cualquier motor</b><span data-i18n="f4_d">Una librería C++ pensada para Unreal, Unity, Godot y motores propios.</span></li>
     </ul>
   </section>
@@ -121,7 +121,7 @@ footer a { color: inherit; text-decoration: none; }
     <ol class="steps">
       <li data-i18n="s1">Rellenas la solicitud con los datos de tu proyecto.</li>
       <li data-i18n="s2">La revisamos. Las plazas son limitadas y buscamos juegos variados.</li>
-      <li data-i18n="s3">Si encajas, te escribimos con el acceso y los siguientes pasos. A cambio, solo te pedimos tu opinión.</li>
+      <li data-i18n="s3">Si encajas, te escribiremos con el acceso y los siguientes pasos cuando abramos la beta. A cambio, solo te pedimos tu opinión.</li>
     </ol>
   </section>
 
@@ -225,7 +225,7 @@ footer a { color: inherit; text-decoration: none; }
 
       <div class="field">
         <label for="comments"><span data-i18n="comments">¿Algo más que quieras contarnos?</span> <span class="opt" data-i18n="optional">(opcional)</span></label>
-        <textarea id="comments" name="comments" maxlength="2000" data-i18n-ph="comments_ph" placeholder="Dudas, ideas, lo que necesitarías del mando…"></textarea>
+        <textarea id="comments" name="comments" maxlength="2000" data-i18n-ph="comments_ph" placeholder="Dudas, ideas, lo que necesitarías en el móvil…"></textarea>
       </div>
 
       <div class="trap" aria-hidden="true">
@@ -271,16 +271,16 @@ const REFS = {
 const EN = {
   pill: 'Closed beta',
   title: 'Control your game from a smartphone',
-  lead: 'Players scan a QR code and their phone becomes the controller, with no app to install. We are opening a closed beta for studios and developers who want to try it in their game.',
+  lead: 'Players scan a QR code and their phone becomes the game’s control interface, with no app to install. In the coming months we will open a closed beta for studios and developers who want to try it in their game.',
   what_title: 'What MobileController is',
-  f1_t: 'No apps', f1_d: 'The controller opens in the phone’s browser from a QR code.',
+  f1_t: 'No apps', f1_d: 'The interface opens in the phone’s browser from a QR code.',
   f2_t: 'Local multiplayer', f2_d: 'Several phones at once, each one with its own player.',
-  f3_t: 'Custom controllers', f3_d: 'Control layouts designed for each game.',
+  f3_t: 'Custom interfaces', f3_d: 'Each game designs the interface it needs on the phone.',
   f4_t: 'For any engine', f4_d: 'A C++ library built for Unreal, Unity, Godot and in-house engines.',
   how_title: 'How the beta works',
   s1: 'Fill in the application with your project’s details.',
   s2: 'We review it. Places are limited and we are looking for a variety of games.',
-  s3: 'If it’s a good fit, we write to you with access and the next steps. All we ask in return is your feedback.',
+  s3: 'If it’s a good fit, we’ll write to you with access and the next steps when the beta opens. All we ask in return is your feedback.',
   form_title: 'Apply for a place',
   name: 'Name', email: 'Email', studio: 'Studio or team', optional: '(optional)',
   source: 'Where did you hear about us?', choose: 'Choose an option',
@@ -296,7 +296,7 @@ const EN = {
   players: 'Phones at once', pl_many: 'More than 8',
   platforms: 'Which systems does your game run on?', pf_console: 'Console',
   link: 'Link to the project', link_hint: 'Steam, itch.io, a website, a video… anything that helps us see your game.',
-  comments: 'Anything else you’d like to tell us?', comments_ph: 'Questions, ideas, what you’d need from the controller…',
+  comments: 'Anything else you’d like to tell us?', comments_ph: 'Questions, ideas, what you’d need on the phone…',
   event_ph: 'Which fair or event?',
   consent: 'I agree to the use of this data to manage my beta application.',
   news: 'I want to get project news by email.',
